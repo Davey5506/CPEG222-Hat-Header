@@ -16,6 +16,12 @@ typedef enum{
     ANALOG = 3U
 }PIN_MODE;
 
+typedef enum{
+    NO_PULL = 0U,
+    PULL_UP = 1U,
+    PULL_DOWN = 2U
+}PIN_PULL;
+
 extern const PMOD_t PMOD_A;
 extern const PMOD_t PMOD_B;
 extern const PMOD_t PMOD_C;
@@ -23,6 +29,7 @@ extern const PMOD_t PMOD_C;
 void init_gpio(GPIO_TypeDef* GPIOx);
 void init_pmod(PMOD_t pmod);
 void set_pin_mode(GPIO_TypeDef* GPIOx, uint8_t pin, PIN_MODE mode);
+void set_pin_pull(GPIO_TypeDef* GPIOx, uint8_t pin, PIN_PULL pull);
 
 
 #endif // HAT_H

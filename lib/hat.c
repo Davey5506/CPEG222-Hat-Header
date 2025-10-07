@@ -59,3 +59,11 @@ void set_pin_mode(GPIO_TypeDef* GPIOx, uint8_t pin, PIN_MODE mode){
     GPIOx->MODER |= (mode << (pin * 2));
     return;
 }
+
+void set_pin_pull(GPIO_TypeDef* GPIOx, uint8_t pin, PIN_PULL pull){
+    GPIOx->PUPDR &= ~(0x3 << (pin * 2));
+    GPIOx->PUPDR |= (pull << (pin * 2));
+    return;
+}
+
+
