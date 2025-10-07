@@ -40,6 +40,7 @@ void init_gpio(GPIO_TypeDef* GPIOx){
             RCC->AHB1ENR |= RCC_AHB1ENR_GPIOGEN;
             break;
         default:
+            break;
     }
     return;
 }
