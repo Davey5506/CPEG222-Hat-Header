@@ -45,4 +45,3 @@ void write_pin(GPIO_TypeDef* GPIOx, uint8_t pin, PIN_VALUE value);
 uint8_t read_pin(GPIO_TypeDef* GPIOx, uint8_t pin);
 
 #endif //HAT_H
-#endif // HAT_H
