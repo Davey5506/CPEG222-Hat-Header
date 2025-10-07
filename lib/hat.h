@@ -22,7 +22,7 @@ extern const PMOD_t PMOD_C;
 
 void init_gpio(GPIO_TypeDef* GPIOx);
 void init_pmod(PMOD_t pmod);
-void set_pin_mode(GPIO_TypeDef* GPIOx, uint8_t pin, PIN_MODE mode)
+void set_pin_mode(GPIO_TypeDef* GPIOx, uint8_t pin, PIN_MODE mode);
 
 
 #endif // HAT_H
