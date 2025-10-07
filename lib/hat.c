@@ -66,4 +66,18 @@ void set_pin_pull(GPIO_TypeDef* GPIOx, uint8_t pin, PIN_PULL pull){
     return;
 }
 
+void set_output_type(GPIO_TypeDef* GPIOx, uint8_t pin, PIN_OUTPUT_TYPE type){
+    GPIOx->OTYPER &= ~(0x1 << pin);
+    GPIOx->OTYPER |= (type << pin);
+    return;
+}
 
+void write_pin(GPIO_TypeDef* GPIOx, uint8_t pin, PIN_VALUE value){
+    GPIOx->ODR &= ~(0x1 << pin);
+    GPIOx->ODR |= (value << pin);
+    return;
+}
+
+uint8_t read_pin(GPIO_TypeDef* GPIOx, uint8_t pin){
+    return (GPIOx->IDR >> pin) & 0x1;
+}
