@@ -43,6 +43,7 @@ void init_gpio(GPIO_TypeDef* GPIOx){
     }
     return;
 }
+
 void init_pmod(PMOD_t pmod){
     for(int i = 0; i < 4; i++){
         if(pmod.GPIO_PORTS[i] != 0){
@@ -51,4 +52,10 @@ void init_pmod(PMOD_t pmod){
             break;
         }
     }
+}
+
+void set_pin_mode(GPIO_TypeDef* GPIOx, uint8_t pin, PIN_MODE mode){
+    GPIOx->MODER &= ~(0x3 << (pin * 2));
+    GPIOx->MODER |= (mode << (pin * 2));
+    return;
 }
