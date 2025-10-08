@@ -1,16 +1,16 @@
 #include "hat.h"
 
-const PMOD_t PMODA = {
+const PMOD_t PMOD_A = {
     .GPIO_PORTS = {GPIOA, GPIOB, GPIOC, 0},
     .PIN_PORTS = {GPIOC, GPIOB, GPIOA, GPIOA, GPIOB, GPIOA, GPIOA, GPIOA},
     .PIN_NUMS = {7, 12, 11, 12, 6, 7, 6, 5},
 };
-const PMOD_t PMODB = {
+const PMOD_t PMOD_B = {
     .GPIO_PORTS = {GPIOA, GPIOB, GPIOC, GPIOD},
     .PIN_PORTS = {GPIOA, GPIOA, GPIOC, GPIOC, GPIOA, GPIOB, GPIOD, GPIOC},
     .PIN_NUMS = {1, 15, 12, 10, 0, 7, 2, 11}
 };
-const PMOD_t PMODC = {
+const PMOD_t PMOD_C = {
     .GPIO_PORTS = {GPIOC, 0, 0, 0},
     .PIN_PORTS = {GPIOC, GPIOC, GPIOC, GPIOC},
     .PIN_NUMS = {0, 1, 2, 3, 0xFF, 0xFF, 0xFF, 0xFF}
@@ -20,9 +20,8 @@ SSD_t SSD = {
     .GPIO_PORTS = {GPIOA, GPIOB, GPIOC},
     .DATA_PIN_PORTS = {GPIOB, GPIOA, GPIOB, GPIOB, GPIOB, GPIOB, GPIOA, GPIOB},
     .DATA_PINs = {10, 9, 13, 14, 4, 1, 10, 5},
-    .SELECT_PIN_PORTS = {GPIOC, GPIOB, GPIOA, GPIOB},
-    .SELECT_PINs = {4, 2, 8, 15},
-    .ACTIVE_DIGIT = 0b0001
+    .SELECT_PIN_PORTS = {GPIOB, GPIOA, GPIOB, GPIOC},
+    .SELECT_PINs = {2, 8, 15, 4},
 };
 
 const uint8_t digits[10] = {
@@ -38,6 +37,7 @@ const uint8_t digits[10] = {
     0b11011110  // 9 (A,B,C,D,F,G)
 };
 uint8_t ssd_out[4] = {0, 0, 0, 0};
+uint8_t active_digit = 0;
 
 void init_gpio(GPIO_TypeDef* GPIOx){
     switch((unsigned int)GPIOx){
@@ -97,8 +97,11 @@ void set_output_type(GPIO_TypeDef* GPIOx, uint8_t pin, PIN_OUTPUT_TYPE type){
 }
 
 void write_pin(GPIO_TypeDef* GPIOx, uint8_t pin, PIN_VALUE value){
-    GPIOx->ODR &= ~(0x1 << pin);
-    GPIOx->ODR |= (value << pin);
+    if(value){
+        GPIOx->BSRR |= (1 << pin);
+    }else{
+        GPIOx->BSRR |= (1 << (pin + 16));
+    }
     return;
 }
 
@@ -106,7 +109,7 @@ uint8_t read_pin(GPIO_TypeDef* GPIOx, uint8_t pin){
     return (GPIOx->IDR >> pin) & 0x1;
 }
 
-void init_ssd(uint16_t num, uint16_t reload_time){
+void init_ssd( uint16_t reload_time){
     for(int i = 0; i < 3; i++){
         init_gpio(SSD.GPIO_PORTS[i]);
     }
@@ -131,31 +134,60 @@ void display_num(uint16_t num, uint8_t decimal_place){
         ssd_out[i] = digits[num % 10];
         num /= 10;
     }
-    switch(decimal_place){
+    ssd_out[decimal_place] |= 1;
+}
+
+// local functions
+void select_active_digit(void){
+    switch(active_digit){
+        case 0:
+            write_pin(SSD.SELECT_PIN_PORTS[0], SSD.SELECT_PINs[0], LOW);
+            write_pin(SSD.SELECT_PIN_PORTS[1], SSD.SELECT_PINs[1], HIGH);
+            write_pin(SSD.SELECT_PIN_PORTS[2], SSD.SELECT_PINs[2], HIGH);
+            write_pin(SSD.SELECT_PIN_PORTS[3], SSD.SELECT_PINs[3], HIGH);
+            break;
         case 1:
-            ssd_out[2] |= 0x01;
+            write_pin(SSD.SELECT_PIN_PORTS[0], SSD.SELECT_PINs[0], HIGH);
+            write_pin(SSD.SELECT_PIN_PORTS[1], SSD.SELECT_PINs[1], LOW);
+            write_pin(SSD.SELECT_PIN_PORTS[2], SSD.SELECT_PINs[2], HIGH);
+            write_pin(SSD.SELECT_PIN_PORTS[3], SSD.SELECT_PINs[3], HIGH);
             break;
         case 2:
-            ssd_out[1] |= 0x01;
+            write_pin(SSD.SELECT_PIN_PORTS[0], SSD.SELECT_PINs[0], HIGH);
+            write_pin(SSD.SELECT_PIN_PORTS[1], SSD.SELECT_PINs[1], HIGH);
+            write_pin(SSD.SELECT_PIN_PORTS[2], SSD.SELECT_PINs[2], LOW);
+            write_pin(SSD.SELECT_PIN_PORTS[3], SSD.SELECT_PINs[3], HIGH);
             break;
         case 3:
-            ssd_out[0] |= 0x01;
+            write_pin(SSD.SELECT_PIN_PORTS[0], SSD.SELECT_PINs[0], HIGH);
+            write_pin(SSD.SELECT_PIN_PORTS[1], SSD.SELECT_PINs[1], HIGH);
+            write_pin(SSD.SELECT_PIN_PORTS[2], SSD.SELECT_PINs[2], HIGH);
+            write_pin(SSD.SELECT_PIN_PORTS[3], SSD.SELECT_PINs[3], LOW);
             break;
         default:
             break;
     }
 }
-
 // ISRs
 void TIM7_IRQHandler(void){
     TIM7->SR &= ~TIM_SR_UIF;
 
-    // Select active digit
-    for(int i = 0; i < 4; i++){
-        write_pin(SSD.SELECT_PIN_PORTS[i], SSD.SELECT_PINs[i], SSD.ACTIVE_DIGIT >> i);
+    // Clear previous digit
+    for(int i = 0; i < 8; i++){
+        write_pin(SSD.DATA_PIN_PORTS[i], SSD.DATA_PINs[i], 0);
     }
+    write_pin(SSD.DATA_PIN_PORTS[7], SSD.DATA_PINs[7], 0);
+
+    // Select active digit
+    select_active_digit();
+
     // Rotate active digit
-    SSD.ACTIVE_DIGIT = (SSD.ACTIVE_DIGIT << 1) > 0x8 ? 0b0001 : SSD.ACTIVE_DIGIT << 1;
+    active_digit = (active_digit + 1) % 4;
 
-
+    // Write ssd_out to GPIO
+    for(int i = 0; i < 8; i++){
+        write_pin(SSD.DATA_PIN_PORTS[i], SSD.DATA_PINs[i], ssd_out[active_digit] >> (i+1) & 1);
+    }
+    write_pin(SSD.DATA_PIN_PORTS[7], SSD.DATA_PINs[7], ssd_out[active_digit] & 1);
+    return;
 }
