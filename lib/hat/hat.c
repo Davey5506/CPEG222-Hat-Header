@@ -18,12 +18,26 @@ const PMOD_t PMODC = {
 
 SSD_t SSD = {
     .GPIO_PORTS = {GPIOA, GPIOB, GPIOC},
-    .DATA_PIN_PORTS = {GPIOB, GPIOB, GPIOB, GPIOB, GPIOA, GPIOA, GPIOB, GPIOB},
-    .DATA_PINs = {4, 14, 5, 13, 10, 9, 1, 10},
+    .DATA_PIN_PORTS = {GPIOB, GPIOA, GPIOB, GPIOB, GPIOB, GPIOB, GPIOA, GPIOB},
+    .DATA_PINs = {10, 9, 13, 14, 4, 1, 10, 5},
     .SELECT_PIN_PORTS = {GPIOC, GPIOB, GPIOA, GPIOB},
     .SELECT_PINs = {4, 2, 8, 15},
     .ACTIVE_DIGIT = 0b0001
 };
+
+const uint8_t digits[10] = {
+    0b01111110, // 0 (A,B,C,D,E,F)
+    0b00001100, // 1 (B,C)
+    0b10110110, // 2 (A,B,D,E,G)
+    0b10011110, // 3 (A,B,C,D,G)
+    0b11001100, // 4 (B,C,F,G)
+    0b11011010, // 5 (A,C,D,F,G)
+    0b11111010, // 6 (A,C,D,E,F,G)
+    0b00001110, // 7 (A,B,C)
+    0b11111110, // 8 (A,B,C,D,E,F,G)
+    0b11011110  // 9 (A,B,C,D,F,G)
+};
+uint8_t ssd_out[4] = {0, 0, 0, 0};
 
 void init_gpio(GPIO_TypeDef* GPIOx){
     switch((unsigned int)GPIOx){
@@ -112,8 +126,36 @@ void init_ssd(uint16_t num, uint16_t reload_time){
     TIM7->CR1 |= TIM_CR1_CEN;
 }
 
+void display_num(uint16_t num, uint8_t decimal_place){
+    for(int i = 0; i < 4; i++){
+        ssd_out[i] = digits[num % 10];
+        num /= 10;
+    }
+    switch(decimal_place){
+        case 1:
+            ssd_out[2] |= 0x01;
+            break;
+        case 2:
+            ssd_out[1] |= 0x01;
+            break;
+        case 3:
+            ssd_out[0] |= 0x01;
+            break;
+        default:
+            break;
+    }
+}
+
 // ISRs
 void TIM7_IRQHandler(void){
     TIM7->SR &= ~TIM_SR_UIF;
+
+    // Select active digit
+    for(int i = 0; i < 4; i++){
+        write_pin(SSD.SELECT_PIN_PORTS[i], SSD.SELECT_PINs[i], SSD.ACTIVE_DIGIT >> i);
+    }
+    // Rotate active digit
     SSD.ACTIVE_DIGIT = (SSD.ACTIVE_DIGIT << 1) > 0x8 ? 0b0001 : SSD.ACTIVE_DIGIT << 1;
+
+
 }

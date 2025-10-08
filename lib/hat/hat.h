@@ -42,12 +42,6 @@ typedef enum{
     HIGH = 1U
 }PIN_VALUE;
 
-typedef enum{
-    SECONDS = 0U,
-    MILLISECONDS = 1U,
-    MICROSECONDS = 2U
-}TIME_UNIT;
-
 extern const PMOD_t PMOD_A;
 extern const PMOD_t PMOD_B;
 extern const PMOD_t PMOD_C;
@@ -60,5 +54,7 @@ void set_output_type(GPIO_TypeDef* GPIOx, uint8_t pin, PIN_OUTPUT_TYPE type);
 void write_pin(GPIO_TypeDef* GPIOx, uint8_t pin, PIN_VALUE value);
 uint8_t read_pin(GPIO_TypeDef* GPIOx, uint8_t pin);
 void init_ssd(void);
+void display_num(uint16_t num, uint8_t decimal_place);
+
 
 #endif //HAT_H
