@@ -2,12 +2,22 @@
 #define HAT_H
 
 #include "stm32f446xx.h"
+#define SYSTEM_FREQ 16000000U
 
 typedef struct{
     GPIO_TypeDef* GPIO_PORTS[4];
     GPIO_TypeDef* PIN_PORTS[8];
     uint8_t PIN_NUMS[8];
 }PMOD_t;
+
+typedef struct{
+    GPIO_TypeDef* GPIO_PORTS[3];
+    GPIO_TypeDef* DATA_PIN_PORTS[8];
+    uint8_t DATA_PINs[8];
+    GPIO_TypeDef* SELECT_PIN_PORTS[4];
+    uint8_t SELECT_PINs[4];
+    uint8_t ACTIVE_DIGIT;
+}SSD_t;
 
 typedef enum{
     INPUT = 0U,
@@ -32,6 +42,12 @@ typedef enum{
     HIGH = 1U
 }PIN_VALUE;
 
+typedef enum{
+    SECONDS = 0U,
+    MILLISECONDS = 1U,
+    MICROSECONDS = 2U
+}TIME_UNIT;
+
 extern const PMOD_t PMOD_A;
 extern const PMOD_t PMOD_B;
 extern const PMOD_t PMOD_C;
@@ -43,5 +59,6 @@ void set_pin_pull(GPIO_TypeDef* GPIOx, uint8_t pin, PIN_PULL pull);
 void set_output_type(GPIO_TypeDef* GPIOx, uint8_t pin, PIN_OUTPUT_TYPE type);
 void write_pin(GPIO_TypeDef* GPIOx, uint8_t pin, PIN_VALUE value);
 uint8_t read_pin(GPIO_TypeDef* GPIOx, uint8_t pin);
+void init_ssd(void);
 
 #endif //HAT_H

@@ -16,6 +16,15 @@ const PMOD_t PMODC = {
     .PIN_NUMS = {0, 1, 2, 3, 0xFF, 0xFF, 0xFF, 0xFF}
 };
 
+SSD_t SSD = {
+    .GPIO_PORTS = {GPIOA, GPIOB, GPIOC},
+    .DATA_PIN_PORTS = {GPIOB, GPIOB, GPIOB, GPIOB, GPIOA, GPIOA, GPIOB, GPIOB},
+    .DATA_PINs = {4, 14, 5, 13, 10, 9, 1, 10},
+    .SELECT_PIN_PORTS = {GPIOC, GPIOB, GPIOA, GPIOB},
+    .SELECT_PINs = {4, 2, 8, 15},
+    .ACTIVE_DIGIT = 0b0001
+};
+
 void init_gpio(GPIO_TypeDef* GPIOx){
     switch((unsigned int)GPIOx){
         case (unsigned int)GPIOA:
@@ -81,4 +90,30 @@ void write_pin(GPIO_TypeDef* GPIOx, uint8_t pin, PIN_VALUE value){
 
 uint8_t read_pin(GPIO_TypeDef* GPIOx, uint8_t pin){
     return (GPIOx->IDR >> pin) & 0x1;
+}
+
+void init_ssd(uint16_t num, uint16_t reload_time){
+    for(int i = 0; i < 3; i++){
+        init_gpio(SSD.GPIO_PORTS[i]);
+    }
+    for(int i = 0; i < 8; i++){
+        set_pin_mode(SSD.DATA_PIN_PORTS[i], SSD.DATA_PINs[i], OUTPUT);
+    }
+    for(int i = 0; i < 4; i++){
+        set_pin_mode(SSD.SELECT_PIN_PORTS[i], SSD.SELECT_PINs[i], OUTPUT);
+    }
+
+    RCC->APB1ENR |= RCC_APB1ENR_TIM7EN;
+    TIM7->DIER |= TIM_DIER_UIE;
+    TIM7->PSC = SYSTEM_FREQ / (160000 - 1);
+    TIM7->ARR = reload_time;
+    NVIC_EnableIRQ(TIM7_IRQn);
+    NVIC_SetPriority(TIM7_IRQn, 20); 
+    TIM7->CR1 |= TIM_CR1_CEN;
+}
+
+// ISRs
+void TIM7_IRQHandler(void){
+    TIM7->SR &= ~TIM_SR_UIF;
+    SSD.ACTIVE_DIGIT = (SSD.ACTIVE_DIGIT << 1) > 0x8 ? 0b0001 : SSD.ACTIVE_DIGIT << 1;
 }
