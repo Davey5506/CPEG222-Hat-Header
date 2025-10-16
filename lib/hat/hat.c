@@ -43,8 +43,8 @@ const uint8_t digits[10] = {
     0b11111110, // 8 (A,B,C,D,E,F,G)
     0b11011110  // 9 (A,B,C,D,F,G)
 };
-uint8_t ssd_out[4] = {0, 0, 0, 0};
-uint8_t active_digit = 0;
+volatile uint8_t ssd_out[4] = {0, 0, 0, 0};
+volatile uint8_t active_digit = 0;
 
 void init_gpio(GPIO_TypeDef* GPIOx){
     switch((unsigned int)GPIOx){
