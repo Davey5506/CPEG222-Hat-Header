@@ -16,7 +16,14 @@ const PMOD_t PMOD_C = {
     .PIN_NUMS = {0, 1, 2, 3, 0xFF, 0xFF, 0xFF, 0xFF}
 };
 
-SSD_t SSD = {
+volatile const ULTRA_SOUND_t ULTRA_SOUND = {
+    .TRIG_PORT = GPIOA,
+    .TRIG_PIN = 4,
+    .ECHO_PORT = GPIOB,
+    .ECHO_PIN = 0
+};
+
+volatile const SSD_t SSD = {
     .GPIO_PORTS = {GPIOA, GPIOB, GPIOC},
     .DATA_PIN_PORTS = {GPIOB, GPIOA, GPIOB, GPIOB, GPIOB, GPIOB, GPIOA, GPIOB},
     .DATA_PINs = {10, 9, 13, 14, 4, 1, 10, 5},
