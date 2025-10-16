@@ -85,6 +85,24 @@ void init_pmod(PMOD_t pmod){
     }
 }
 
+void init_usart(uint32_t baudrate){
+    RCC->APB1ENR |= RCC_APB1ENR_USART2EN;
+    init_gpio(GPIOA);
+    set_pin_mode(GPIOA, 2, AF);
+    set_pin_mode(GPIOA, 3, AF);
+    GPIOA->AFR[0] |= (7 << (2 * 4)) | (7 << (3 * 4));
+    USART2->BRR = SystemCoreClock / baudrate;
+    USART2->CR1 |= USART_CR1_UE | USART_CR1_TE | USART_CR1_RE;
+
+    return;
+}
+
+void send_char(USART_TypeDef* USARTx, char c){
+    while(!(USARTx->SR & USART_SR_TXE));
+    USARTx->DR = c;
+    return;
+}
+
 void set_pin_mode(GPIO_TypeDef* GPIOx, uint8_t pin, PIN_MODE mode){
     GPIOx->MODER &= ~(0x3 << (pin * 2));
     GPIOx->MODER |= (mode << (pin * 2));
