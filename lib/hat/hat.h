@@ -71,6 +71,6 @@ void init_gp_timer(TIM_TypeDef* TIMx, uint32_t freq, uint32_t arr);
 void init_timer_IRQ(TIM_TypeDef* TIMx, uint16_t priority);
 void init_ssd (uint16_t reload_time);
 void display_num(uint16_t num, uint8_t decimal_place);
-
+void init_ultrasound(void);
 
 #endif //HAT_H
